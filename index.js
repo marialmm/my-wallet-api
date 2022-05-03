@@ -3,23 +3,90 @@ import chalk from "chalk";
 import cors from "cors";
 import dayjs from "dayjs";
 import dotenv from "dotenv";
-import express, {json} from "express";
+import express, { json } from "express";
 import joi from "joi";
-import mongodb from "mongodb";
+import { MongoClient } from "mongodb";
+
+dotenv.config();
 
 const app = express();
+const mongoClient = new MongoClient(process.env.MONGO_URI);
+let db;
+
+mongoClient.connect().then(() => {
+    db = mongoClient.db(process.env.DATABASE);
+});
 
 app.use(json());
 app.use(cors());
 
 app.post("/sign-up", async (req, res) => {
-    console.log(chalk.blue("Cadastro realizado com sucesso!"));
-    res.send("Cadastro realizado com sucesso!");
+    const body = req.body;
+
+    const userSchema = joi.object({
+        name: joi.string().required(),
+        email: joi.string().email().required(),
+        password: joi.string().required(),
+    });
+    const validate = userSchema.validate(body);
+
+    if (validate.error) {
+        console.log(validate.error.details.map((detail) => detail.message));
+        res.sendStatus(422);
+        return;
+    }
+
+    body.password = bcrypt.hashSync(body.password, 10);
+
+    try {
+        const user = await db
+            .collection("users")
+            .findOne({ email: body.email });
+        const users = await db.collection("users").find({});
+        console.log(users);
+
+        if (user) {
+            res.status(422).send("Email já cadastrado");
+            return;
+        }
+
+        await db.collection("users").insertOne({ ...body });
+
+        res.status(201).send("Cadastro realizado com sucesso!");
+    } catch {
+        res.sendStatus(500);
+    }
 });
 
 app.post("/login", async (req, res) => {
-    console.log(chalk.blue("Login realizado com sucesso!"));
-    res.send("Login realizado com sucesso!");
+    const body = req.body;
+
+    const loginSchema = joi.object({
+        email: joi.string().email().required(),
+        password: joi.string().required(),
+    });
+    const validation = loginSchema.validate(body);
+
+    if (validation.error) {
+        console.log(validation.error.details.map((detail) => detail.message));
+        res.sendStatus(422);
+    }
+
+    try {
+        const user = await db
+            .collection("users")
+            .findOne({ email: body.email });
+
+        if (user && bcrypt.compareSync(body.password, user.password)) {
+            // TODO -> token
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(401);
+        }
+    } catch (erro) {
+        console.log(erro);
+        res.sendStatus(500);
+    }
 });
 
 app.get("/registry", async (req, res) => {
@@ -27,9 +94,11 @@ app.get("/registry", async (req, res) => {
     res.send("Registro coletado com sucesso!");
 });
 
-app.post("/registry", async (req, res) =>{
+app.post("/registry", async (req, res) => {
     console.log(chalk.blue("Registro realizado com sucesso!"));
     res.send("Registro realizado com sucesso!");
 });
 
-app.listen(5000, () => console.log(chalk.green("Server listening on port 5000")));
+app.listen(5000, () =>
+    console.log(chalk.green("Server listening on port 5000"))
+);
