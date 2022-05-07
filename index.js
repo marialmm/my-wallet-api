@@ -6,11 +6,12 @@ import dotenv from "dotenv";
 import express, { json } from "express";
 import joi from "joi";
 import { MongoClient } from "mongodb";
+import { v4 as uuid } from 'uuid';
 
 dotenv.config();
 
 const app = express();
-const mongoClient = new MongoClient(process.env.MONGO_URI);
+const mongoClient = new MongoClient(process.env.MONGO_URL);
 let db;
 
 mongoClient.connect().then(() => {
@@ -78,8 +79,13 @@ app.post("/login", async (req, res) => {
             .findOne({ email: body.email });
 
         if (user && bcrypt.compareSync(body.password, user.password)) {
-            // TODO -> token
-            res.sendStatus(200);
+            const token = uuid();
+            await db.collection("sections").insertOne({
+                userId: user._id,
+                token
+            });
+
+            res.status(200).send(token);
         } else {
             res.sendStatus(401);
         }
