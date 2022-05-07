@@ -1,66 +1,25 @@
-import bcrypt from "bcrypt";
 import chalk from "chalk";
 import cors from "cors";
 import dayjs from "dayjs";
 import dotenv from "dotenv";
 import express, { json } from "express";
 import joi from "joi";
-import { MongoClient } from "mongodb";
 import { v4 as uuid } from "uuid";
 
-import {SignUp} from "./controllers/userController.js"
+import db from "./db.js"
+import {SignUp, Login} from "./controllers/userController.js"
 
 dotenv.config();
 
 const app = express();
-const mongoClient = new MongoClient(process.env.MONGO_URL);
-let db;
 
-mongoClient.connect().then(() => {
-    db = mongoClient.db(process.env.DATABASE);
-});
 
 app.use(json());
 app.use(cors());
 
 app.post("/sign-up", SignUp);
 
-app.post("/login", async (req, res) => {
-    const body = req.body;
-
-    const loginSchema = joi.object({
-        email: joi.string().email().required(),
-        password: joi.string().required(),
-    });
-    const validation = loginSchema.validate(body, {abortEarly: false});
-
-    if (validation.error) {
-        console.log(validation.error.details.map((detail) => detail.message));
-        res.sendStatus(422);
-        return;
-    }
-
-    try {
-        const user = await db
-            .collection("users")
-            .findOne({ email: body.email });
-
-        if (user && bcrypt.compareSync(body.password, user.password)) {
-            const token = uuid();
-            await db.collection("sessions").insertOne({
-                userId: user._id,
-                token,
-            });
-
-            res.status(200).send(token);
-        } else {
-            res.sendStatus(401);
-        }
-    } catch (erro) {
-        console.log(erro);
-        res.sendStatus(500);
-    }
-});
+app.post("/login", Login);
 
 app.get("/registry", async (req, res) => {
     const { authorization } = req.headers;
