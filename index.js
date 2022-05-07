@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express, { json } from "express";
 
-import {signUp, login} from "./controllers/userController.js";
+import userRouter from "./routes/userRouter.js";
 import registryRouter from "./routes/registryRouter.js";
 
 
@@ -14,11 +14,10 @@ const app = express();
 app.use(json());
 app.use(cors());
 
-app.use(registryRouter)
+app.use(userRouter);
+app.use(registryRouter);
 
-app.post("/sign-up", signUp);
 
-app.post("/login", login);
 
 
 
