@@ -6,7 +6,9 @@ import dotenv from "dotenv";
 import express, { json } from "express";
 import joi from "joi";
 import { MongoClient } from "mongodb";
-import { v4 as uuid } from 'uuid';
+import { v4 as uuid } from "uuid";
+
+import {SignUp} from "./controllers/userController.js"
 
 dotenv.config();
 
@@ -21,43 +23,7 @@ mongoClient.connect().then(() => {
 app.use(json());
 app.use(cors());
 
-app.post("/sign-up", async (req, res) => {
-    const body = req.body;
-
-    const userSchema = joi.object({
-        name: joi.string().required(),
-        email: joi.string().email().required(),
-        password: joi.string().required(),
-    });
-    const validate = userSchema.validate(body);
-
-    if (validate.error) {
-        console.log(validate.error.details.map((detail) => detail.message));
-        res.sendStatus(422);
-        return;
-    }
-
-    body.password = bcrypt.hashSync(body.password, 10);
-
-    try {
-        const user = await db
-            .collection("users")
-            .findOne({ email: body.email });
-        const users = await db.collection("users").find({});
-        console.log(users);
-
-        if (user) {
-            res.status(422).send("Email já cadastrado");
-            return;
-        }
-
-        await db.collection("users").insertOne({ ...body });
-
-        res.status(201).send("Cadastro realizado com sucesso!");
-    } catch {
-        res.sendStatus(500);
-    }
-});
+app.post("/sign-up", SignUp);
 
 app.post("/login", async (req, res) => {
     const body = req.body;
@@ -66,11 +32,12 @@ app.post("/login", async (req, res) => {
         email: joi.string().email().required(),
         password: joi.string().required(),
     });
-    const validation = loginSchema.validate(body);
+    const validation = loginSchema.validate(body, {abortEarly: false});
 
     if (validation.error) {
         console.log(validation.error.details.map((detail) => detail.message));
         res.sendStatus(422);
+        return;
     }
 
     try {
@@ -80,9 +47,9 @@ app.post("/login", async (req, res) => {
 
         if (user && bcrypt.compareSync(body.password, user.password)) {
             const token = uuid();
-            await db.collection("sections").insertOne({
+            await db.collection("sessions").insertOne({
                 userId: user._id,
-                token
+                token,
             });
 
             res.status(200).send(token);
@@ -96,13 +63,88 @@ app.post("/login", async (req, res) => {
 });
 
 app.get("/registry", async (req, res) => {
-    console.log(chalk.blue("Registro coletado com sucesso!"));
-    res.send("Registro coletado com sucesso!");
+    const { authorization } = req.headers;
+    const token = authorization?.replace("Bearer ", "");
+
+    try {
+        const session = await db.collection("sessions").findOne({ token });
+        console.log;
+
+        if (!session) {
+            res.sendStatus(401);
+            return;
+        }
+
+        const user = await db
+            .collection("users")
+            .findOne({ _id: session.userId });
+
+        if (!user) {
+            res.sendStatus(404);
+            return;
+        }
+
+        delete user.password;
+        delete user._id;
+        delete user.email;
+
+        res.send(user);
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(500);
+    }
 });
 
 app.post("/registry", async (req, res) => {
-    console.log(chalk.blue("Registro realizado com sucesso!"));
-    res.send("Registro realizado com sucesso!");
+    const { authorization } = req.headers;
+    const token = authorization?.replace("Bearer ", "");
+
+    const body = req.body;
+
+    const registerSchema = joi.object({
+        description: joi.string().required(),
+        value: joi.number().required(),
+        type: joi.string().valid("income", "expense").required()
+    });
+
+    const validation = registerSchema.validate(body, {abortEarly: false});
+
+    if(validation.error){
+        console.log(validation.error.details.map((detail) => detail.message));
+        res.sendStatus(422);
+        return;
+    }
+
+    body.date = dayjs().format("DD/MM");
+
+    try {
+        const session = await db.collection("sessions").findOne({ token });
+        console.log;
+
+        if (!session) {
+            res.sendStatus(401);
+            return;
+        }
+
+        const user = await db
+            .collection("users")
+            .findOne({ _id: session.userId });
+
+        if (!user) {
+            res.sendStatus(404);
+            return;
+        }
+
+        user.registry.push(body);
+
+        await db.collection("users").updateOne({_id: user._id}, {$set: user});
+
+        res.sendStatus(201);
+
+    } catch (e) {
+        res.sendStatus(500);
+        console.log(e);
+    }
 });
 
 app.listen(5000, () =>
