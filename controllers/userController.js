@@ -1,10 +1,11 @@
 import joi from "joi";
 import bcrypt from "bcrypt";
 import chalk from "chalk";
+import { v4 as uuid } from "uuid";
 
 import db from "./../db.js";
 
-export async function SignUp(req, res){
+export async function signUp(req, res){
     const body = req.body;
 
     const userSchema = joi.object({
@@ -44,7 +45,7 @@ export async function SignUp(req, res){
     }
 }
 
-export async function Login(req, res){
+export async function login(req, res){
     const body = req.body;
 
     const loginSchema = joi.object({
