@@ -3,71 +3,30 @@ import dayjs from "dayjs";
 
 import db from "./../db.js";
 
-export async function getRegistry (req, res){
-    const { authorization } = req.headers;
-    const token = authorization?.replace("Bearer ", "");
+export async function getRegistry(req, res) {
+    const user = res.locals.user;
 
-    try {
-        const session = await db.collection("sessions").findOne({ token });
-        console.log;
+    delete user.password;
+    delete user._id;
+    delete user.email;
 
-        if (!session) {
-            res.sendStatus(401);
-            return;
-        }
-
-        const user = await db
-            .collection("users")
-            .findOne({ _id: session.userId });
-
-        if (!user) {
-            res.sendStatus(404);
-            return;
-        }
-
-        delete user.password;
-        delete user._id;
-        delete user.email;
-
-        res.send(user);
-    } catch (e) {
-        console.log(e);
-        res.sendStatus(500);
-    }
+    res.send(user);
 }
 
-export async function sendRegister(req, res){
-    const { authorization } = req.headers;
-    const token = authorization?.replace("Bearer ", "");
-
+export async function sendRegister(req, res) {
     const body = req.body;
+    const user = res.locals.user;
 
     body.date = dayjs().format("DD/MM");
 
     try {
-        const session = await db.collection("sessions").findOne({ token });
-        console.log;
-
-        if (!session) {
-            res.sendStatus(401);
-            return;
-        }
-
-        const user = await db
-            .collection("users")
-            .findOne({ _id: session.userId });
-
-        if (!user) {
-            res.sendStatus(404);
-            return;
-        }
-
         user.registry.push(body);
 
-        await db.collection("users").updateOne({_id: user._id}, {$set: user});
+        await db
+            .collection("users")
+            .updateOne({ _id: user._id }, { $set: user });
 
         res.sendStatus(201);
-
     } catch (e) {
         res.sendStatus(500);
         console.log(e);

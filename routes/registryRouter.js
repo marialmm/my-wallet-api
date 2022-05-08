@@ -4,17 +4,20 @@ import {
     getRegistry,
     sendRegister,
 } from "./../controllers/registryController.js";
-import { schemaValidation } from "../middlewares/validationMiddlewares.js";
+import { validateSchema } from "../middlewares/validationMiddlewares.js";
 import { registerSchema } from "../schemas/schemas.js";
+import { validateToken } from "../middlewares/authMiddleware.js";
 
 const registryRouter = Router();
+
+registryRouter.use(validateToken);
 
 registryRouter.get("/registry", getRegistry);
 
 registryRouter.post(
     "/registry",
     (req, res, next) => {
-        schemaValidation(req, res, next, registerSchema);
+        validateSchema(req, res, next, registerSchema);
     },
     sendRegister
 );
