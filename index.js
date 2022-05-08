@@ -22,5 +22,5 @@ app.use(registryRouter);
 
 
 app.listen(5000, () =>
-    console.log(chalk.green("Server listening on port 5000"))
+    console.log(chalk.green("Server is running on port 5000"))
 );

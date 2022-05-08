@@ -8,19 +8,6 @@ import db from "./../db.js";
 export async function signUp(req, res){
     const body = req.body;
 
-    const userSchema = joi.object({
-        name: joi.string().required(),
-        email: joi.string().email().required(),
-        password: joi.string().required(),
-    });
-    const validate = userSchema.validate(body, {abortEarly: false});
-
-    if (validate.error) {
-        console.log(validate.error.details.map((detail) => detail.message));
-        res.sendStatus(422);
-        return;
-    }
-
     body.password = bcrypt.hashSync(body.password, 10);
 
     try {
@@ -47,18 +34,6 @@ export async function signUp(req, res){
 
 export async function login(req, res){
     const body = req.body;
-
-    const loginSchema = joi.object({
-        email: joi.string().email().required(),
-        password: joi.string().required(),
-    });
-    const validation = loginSchema.validate(body, {abortEarly: false});
-
-    if (validation.error) {
-        console.log(validation.error.details.map((detail) => detail.message));
-        res.sendStatus(422);
-        return;
-    }
 
     try {
         const user = await db

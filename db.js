@@ -10,6 +10,6 @@ try{
     await mongoClient.connect()
     db = mongoClient.db(process.env.DATABASE);
 } catch(error) {
-    console.log(error)
+    console.log("Cannot connect to Mongodb", error);
 };
 export default db;

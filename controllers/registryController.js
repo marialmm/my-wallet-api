@@ -42,20 +42,6 @@ export async function sendRegister(req, res){
 
     const body = req.body;
 
-    const registerSchema = joi.object({
-        description: joi.string().required(),
-        value: joi.number().required(),
-        type: joi.string().valid("income", "expense").required()
-    });
-
-    const validation = registerSchema.validate(body, {abortEarly: false});
-
-    if(validation.error){
-        console.log(validation.error.details.map((detail) => detail.message));
-        res.sendStatus(422);
-        return;
-    }
-
     body.date = dayjs().format("DD/MM");
 
     try {
