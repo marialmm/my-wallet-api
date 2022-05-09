@@ -1,6 +1,4 @@
-import joi from "joi";
 import bcrypt from "bcrypt";
-import chalk from "chalk";
 import { v4 as uuid } from "uuid";
 
 import db from "./../db.js";
@@ -11,13 +9,10 @@ export async function signUp(req, res){
     body.password = bcrypt.hashSync(body.password, 10);
 
     try {
-        console.log(chalk.blue("Conectando no db"))
         const user = await db
             .collection("users")
             .findOne({ email: body.email });
         const users = await db.collection("users").find({});
-
-        console.log(chalk.blue("usuario procurado"));
 
         if (user) {
             res.status(409).send("Email já cadastrado");
