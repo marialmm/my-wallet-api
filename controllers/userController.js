@@ -19,7 +19,7 @@ export async function signUp(req, res){
             return;
         }
 
-        await db.collection("users").insertOne({ ...body, registry: [] });
+        await db.collection("users").insertOne({ ...body, transactions: [] });
 
         res.status(201).send("Cadastro realizado com sucesso!");
     } catch {
@@ -46,6 +46,18 @@ export async function login(req, res){
         } else {
             res.sendStatus(401);
         }
+    } catch (erro) {
+        console.log(erro);
+        res.sendStatus(500);
+    }
+}
+
+export async function logout(req, res){
+    const token = res.locals.token;
+
+    try{
+        await db.collection("sessions").deleteOne({token});
+        res.sendStatus(200);
     } catch (erro) {
         console.log(erro);
         res.sendStatus(500);

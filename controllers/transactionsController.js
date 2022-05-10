@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 
 import db from "./../db.js";
 
-export async function getRegistry(req, res) {
+export async function getTransactions(req, res) {
     const user = res.locals.user;
 
     delete user.password;
@@ -13,14 +13,14 @@ export async function getRegistry(req, res) {
     res.send(user);
 }
 
-export async function sendRegister(req, res) {
+export async function sendTransaction(req, res) {
     const body = req.body;
     const user = res.locals.user;
 
     body.date = dayjs().format("DD/MM");
 
     try {
-        user.registry.push(body);
+        user.transactions.push(body);
 
         await db
             .collection("users")

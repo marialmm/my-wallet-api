@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import express, { json } from "express";
 
 import userRouter from "./routes/userRouter.js";
-import registryRouter from "./routes/registryRouter.js";
+import transactionsRouter from "./routes/transactionsRouter.js";
 
 
 dotenv.config();
@@ -15,7 +15,7 @@ app.use(json());
 app.use(cors());
 
 app.use(userRouter);
-app.use(registryRouter);
+app.use(transactionsRouter);
 
 
 

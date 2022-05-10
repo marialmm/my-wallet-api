@@ -1,8 +1,9 @@
 import { Router } from "express";
 
-import { signUp, login } from "./../controllers/userController.js";
+import { signUp, login, logout } from "./../controllers/userController.js";
 import { userSchema, loginSchema } from "./../schemas/schemas.js";
 import { validateSchema } from "../middlewares/validationMiddlewares.js";
+import { validateToken } from "../middlewares/authMiddleware.js";
 
 const userRouter = Router();
 
@@ -13,6 +14,7 @@ userRouter.post(
     },
     signUp
 );
+
 userRouter.post(
     "/login",
     (req, res, next) => {
@@ -20,5 +22,7 @@ userRouter.post(
     },
     login
 );
+
+userRouter.delete("/logout", validateToken, logout)
 
 export default userRouter;

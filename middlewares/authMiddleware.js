@@ -6,7 +6,6 @@ export async function validateToken(req, res, next) {
 
     try {
         const session = await db.collection("sessions").findOne({ token });
-        console.log;
 
         if (!session) {
             res.sendStatus(401);
@@ -23,6 +22,7 @@ export async function validateToken(req, res, next) {
         }
 
         res.locals.user = user;
+        res.locals.token = token;
 
         next();
     } catch (e) {
