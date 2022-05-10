@@ -1,5 +1,5 @@
-import joi from "joi";
 import dayjs from "dayjs";
+import { v4 as uuid } from "uuid";
 
 import db from "./../db.js";
 
@@ -18,6 +18,7 @@ export async function sendTransaction(req, res) {
     const user = res.locals.user;
 
     body.date = dayjs().format("DD/MM");
+    body.id = uuid();
 
     try {
         user.transactions.push(body);
@@ -27,6 +28,20 @@ export async function sendTransaction(req, res) {
             .updateOne({ _id: user._id }, { $set: user });
 
         res.sendStatus(201);
+    } catch (e) {
+        res.sendStatus(500);
+        console.log(e);
+    }
+}
+
+export async function deleteTransaction(req, res){
+    const id = req.params.idTransaction;
+    const user = res.locals.user;
+
+    user.transactions = user.transactions.filter(transaction => transaction.id !== id);
+    try{
+        await db.collection("users").updateOne({_id: user._id}, {$set: {...user}});
+        res.sendStatus(200);
     } catch (e) {
         res.sendStatus(500);
         console.log(e);
