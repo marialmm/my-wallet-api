@@ -14,5 +14,6 @@ export const loginSchema = joi.object({
 export const transactionsSchema = joi.object({
     description: joi.string().required(),
     value: joi.number().required(),
-    type: joi.string().valid("income", "expense").required()
+    type: joi.string().valid("income", "expense").required(),
+    id: joi.string()
 });

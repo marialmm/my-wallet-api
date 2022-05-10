@@ -40,7 +40,28 @@ export async function deleteTransaction(req, res){
 
     user.transactions = user.transactions.filter(transaction => transaction.id !== id);
     try{
-        await db.collection("users").updateOne({_id: user._id}, {$set: {...user}});
+        await db.collection("users").updateOne({_id: user._id}, {$set: user});
+        res.sendStatus(200);
+    } catch (e) {
+        res.sendStatus(500);
+        console.log(e);
+    }
+}
+
+export async function editTransaction(req, res){
+    const body = req.body;
+    const id = req.params.idTransaction;
+    const user = res.locals.user;
+
+    user.transactions.forEach(transaction => {
+        if(transaction.id === id){
+            transaction.value = body.value;
+            transaction.description = body.description;
+        }
+    })
+
+    try{
+        await db.collection("users").updateOne({_id: user._id }, { $set: user});
         res.sendStatus(200);
     } catch (e) {
         res.sendStatus(500);
